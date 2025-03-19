@@ -1,0 +1,35 @@
+name: backup
+
+on:
+  # Triggers the workflow on push events but only for the "main" branch
+  push:
+    branches: [ "main" ]
+
+  # Allows you to run this workflow manually from the Actions tab - keeping this for demo
+  workflow_dispatch:
+
+jobs:
+  # This workflow contains a single job called "create-backup"
+  create-backup:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v4
+
+      - name: Backup Kubernetes Resources
+        run: |
+          BACKUP_NAME="backup-$(date +"%Y-%m-%d-%H-%M-%S")
+          BACKUP_DIR="/k8s-backup/BACKUP_NAME"
+          mkdir -p BACKUP_DIR
+
+          kubectl get all -A -o yaml > "$BACKUP_DIR/backup.yaml",
+          kubectl get secrets -A -o yaml > "$BACKUP_DIR/secrets.yaml",
+          kubectl get certificates -A -o yaml > "$BACKUP_DIR/certs.yaml",
+          kubectl get configmap -A -o yaml > "$BACKUP_DIR/configmap.yaml",
+          kubectl get svc -n istio-system -o yaml > "$BACKUP_DIR/istio-svc.yaml",
+          kubectl get secrets -n istio-system -o yaml > "$BACKUP_DIR/istio-secrets.yaml".
+
+      #- name: Backup with Velero
+        #run: |
+          #velero create backup "$BACKUP_NAME" --include-namespaces cisco,vault,cert-manager,istio-system
