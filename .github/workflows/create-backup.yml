@@ -1,21 +1,29 @@
-name: backup
+name: upgrade EKS
 
 on:
   # Triggers the workflow on push events but only for the "main" branch
   push:
     branches: [ "main" ]
 
-  # Allows you to run this workflow manually from the Actions tab - keeping this for demo
+  # Allows you to run this workflow manually from the Actions tab 
   workflow_dispatch:
 
 jobs:
-  # This workflow contains a single job called "create-backup"
-  create-backup:
+
+  # job 1, jobs run in parallel
+  Back-up:
     runs-on: ubuntu-latest
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4
+
+      # Configure AWS credentials to access EKS
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: arn:aws:iam::XXXXXX:role/GitHubActionsEKSRole
+          aws-region: us-west-2
 
       - name: Backup Kubernetes Resources
         run: |
@@ -30,6 +38,28 @@ jobs:
           kubectl get svc -n istio-system -o yaml > "$BACKUP_DIR/istio-svc.yaml",
           kubectl get secrets -n istio-system -o yaml > "$BACKUP_DIR/istio-secrets.yaml".
 
-      #- name: Backup with Velero
-        #run: |
+      - name: Backup with Velero
+        run: |
           #velero create backup "$BACKUP_NAME" --include-namespaces cisco,vault,cert-manager,istio-system
+
+  # job 2
+  upgrade-EKS:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v4
+
+      # Configure AWS credentials to access EKS
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: arn:aws:iam::XXXXXX:role/GitHubActionsEKSRole
+          aws-region: us-west-2
+
+      # run helm-diff script to see what needs to be updated
+      - name: Run helm-diff
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: arn:aws:iam::XXXXXX:role/GitHubActionsEKSRole
+          aws-region: us-west-2
