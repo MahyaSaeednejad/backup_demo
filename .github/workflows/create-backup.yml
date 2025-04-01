@@ -50,6 +50,7 @@ jobs:
   # job 2
   upgrade-EKS:
     runs-on: ubuntu-latest
+    needs: Back-up
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
